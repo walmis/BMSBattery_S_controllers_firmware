@@ -31,6 +31,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "brake.h"
 #include "interrupts.h"
 #include "update_setpoint.h"
+#include "eeprom.h"
 
 display_view_type display_view;
 
@@ -53,7 +54,7 @@ uint8_t ui8_rx_buffer[13];
 uint8_t ui8_rx_buffer_counter = 0;
 uint8_t ui8_byte_received;
 uint8_t ui8_moving_indication = 0;
-uint8_t ui8_UARTCounter = 0;
+static uint8_t ui8_UARTCounter = 0;
 uint8_t ui8_msg_received=0;
 volatile struc_lcd_configuration_variables lcd_configuration_variables;
 
@@ -289,6 +290,15 @@ void check_message()
      lcd_configuration_variables.ui8_controller_max_current = (ui8_rx_buffer [9] & 15);
      ui8_assistlevel_global=lcd_configuration_variables.ui8_assist_level;
      display_update();
+   }
+   else if  (ui8_rx_buffer [2]==0x21){
+       for (ui8_j = 2; ui8_j <= 5; ui8_j++)
+       {
+         putchar (ui8_rx_buffer [ui8_j]);
+       }
+       eeprom_write(ui8_rx_buffer [3],ui8_rx_buffer [4]);
+       putchar (eeprom_read(ui8_rx_buffer [3]));
+
    }
  }
 /****************************************************************************************************

@@ -29,6 +29,7 @@
 #include "config.h"
 #include "display.h"
 #include "display_kingmeter.h"
+#include "eeprom.h"
 
 
 //uint16_t ui16_LPF_angle_adjust = 0;
@@ -67,6 +68,8 @@ uint32_t ui32_PAS_accumulated = 0;	//cadence in timetics
 uint8_t ui8_PAS_Flag = 0; 		//flag for PAS interrupt
 uint8_t ui8_SPEED_Flag = 0; 		//flag for SPEED interrupt
 uint8_t ui8_SPEED_Tag = 0; 		//flag for SPEED update in update_setpoint
+
+uint8_t limit;
 uint8_t uint8_t_rotorposition [7] = {
     0 ,
     42 ,
@@ -155,6 +158,9 @@ int main (void)
   PAS_init();
   SPEED_init();
   display_init();
+  limit = eeprom_read (1);
+  control_loop_init();
+
 
 //  ITC_SetSoftwarePriority (ITC_IRQ_TIM1_OVF, ITC_PRIORITYLEVEL_2);
 
@@ -469,7 +475,7 @@ if(ui8_cheat_state==3) //second step, make sure the brake is hold according to d
       //getchar1 ();
 
 #ifdef DIAGNOSTICS
-	 printf("%u, %lu, %u, %u, %u, %u\r\n", ui16_setpoint, uint32_current_target, ui16_BatteryCurrent, ui16_PAS, ui16_sum_torque, (uint16_t) ui32_SPEED_km_h);
+	 printf("%u, %lu, %u, %u, %u, %u\r\n", limit, uint32_current_target, ui16_BatteryCurrent, ui16_PAS, ui16_sum_torque, (uint16_t) ui32_SPEED_km_h);
 #endif
 	  //printf("erps %d, motorstate %d, cyclecountertotal %d\r\n", ui16_motor_speed_erps, ui8_motor_state, ui16_PWM_cycles_counter_total);
 

@@ -9,7 +9,7 @@
 #define CONFIG_H_
 
 #define NUMBER_OF_PAS_MAGS 16
-#define limit 26
+//#define limit 26
 #define timeout 3125
 #define wheel_circumference 2200L
 #define fummelfaktor 32L
@@ -39,12 +39,12 @@
 #define PAS_THRESHOLD 1.7
 #define THROTTLE
 #define PWM_CYCLES_SECOND 15625L
-//#define DISPLAY_TYPE_KT_LCD3
+#define DISPLAY_TYPE_KT_LCD3
 //#define DISPLAY_TYPE_KINGMETER_618U (1<<4) // King-Meter 618U protocol (KM5s, EBS-LCD2, J-LCD, SW-LCD)
 //#define DISPLAY_TYPE_KINGMETER (DISPLAY_TYPE_KINGMETER_618U|DISPLAY_TYPE_KINGMETER_901U)
 //#define DISPLAY_TYPE DISPLAY_TYPE_KINGMETER  // Set your display type here. CHANGES ONLY HERE!
 #define SPEEDSENSOR_INTERNAL
-//#define DIAGNOSTICS
+#define DIAGNOSTICS
 #define REGEN_DIGITAL
 #define PAS_DIRECTION 1
 

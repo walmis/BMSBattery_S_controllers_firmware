@@ -26,5 +26,7 @@ extern int8_t i8_motor_temperature;
 extern uint8_t ui8_regen_flag;
 extern uint32_t uint32_current_target;
 
+void control_loop_init (void);
+
 
 #endif /* _SPEED_H */
