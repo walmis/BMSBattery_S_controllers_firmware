@@ -298,6 +298,11 @@ void check_message()
        }
        eeprom_write(ui8_rx_buffer [3],ui8_rx_buffer [4]);
        putchar (eeprom_read(ui8_rx_buffer [3]));
+       switch (ui8_rx_buffer [3])
+           {
+             case 1:
+               control_loop_init();
+           }
 
    }
  }

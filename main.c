@@ -158,7 +158,7 @@ int main (void)
   PAS_init();
   SPEED_init();
   display_init();
-  limit = eeprom_read (1);
+
   control_loop_init();
 
 

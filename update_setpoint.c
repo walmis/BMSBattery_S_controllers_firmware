@@ -25,6 +25,7 @@
 #include "config.h"
 #include "utils.h"
 #include "brake.h"
+#include "eeprom.h"
 
 
 
@@ -54,6 +55,7 @@ uint16_t ui16_erps_limit_higher;
 uint16_t ui16_erps_max=PWM_CYCLES_SECOND/30; //limit erps to have minimum 30 points on the sine curve for proper commutation
 
 void control_loop_init (void){
+  limit = eeprom_read (1);
   ui16_erps_limit_lower = (uint16_t)((float)GEAR_RATIO*(float)limit*10000.0/((float)wheel_circumference*36.0));
   ui16_erps_limit_higher=(uint16_t)((float)GEAR_RATIO*(float)(limit+2)*10000.0/((float)wheel_circumference*36.0));
 }
