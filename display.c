@@ -292,16 +292,13 @@ void check_message()
      display_update();
    }
    else if  (ui8_rx_buffer [2]==0x21){
-       for (ui8_j = 2; ui8_j <= 5; ui8_j++)
-       {
-         putchar (ui8_rx_buffer [ui8_j]);
-       }
        eeprom_write(ui8_rx_buffer [3],ui8_rx_buffer [4]);
-       putchar (eeprom_read(ui8_rx_buffer [3]));
+       //putchar (eeprom_read(ui8_rx_buffer [3]));
        switch (ui8_rx_buffer [3])
            {
              case 1:
                control_loop_init();
+               printf("Speed Limit set to %u \r\n", eeprom_read(ui8_rx_buffer [3]));
            }
 
    }
