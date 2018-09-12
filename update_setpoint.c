@@ -46,11 +46,12 @@ uint8_t ui8_control_state=0; //regen flag for shifting from +90° to -90°
 static uint16_t ui16_PAS_accumulated = 64000L; // for filtering of PAS value
 static uint32_t ui32_erps_accumulated; //for filtering of erps
 uint32_t ui32_erps_filtered; //filtered value of erps
-uint32_t ui32_temp;
+uint8_t ui8_temp;
 //uint16_t ui16_erps_limit_lower=((limit)*(GEAR_RATIO/wheel_circumference));
 //uint16_t ui16_erps_limit_higher=((limit+2)*(GEAR_RATIO/wheel_circumference));
 uint16_t ui16_erps_limit_lower=(uint16_t)((float)GEAR_RATIO*(float)limit*10000.0/((float)wheel_circumference*36.0));
 uint16_t ui16_erps_limit_higher=(uint16_t)((float)GEAR_RATIO*(float)(limit+2)*10000.0/((float)wheel_circumference*36.0));
+uint16_t ui16_erps_limit_6km_h=(uint16_t)((float)GEAR_RATIO*(float)6*10000.0/((float)wheel_circumference*36.0));
 
 uint16_t ui16_erps_max=PWM_CYCLES_SECOND/30; //limit erps to have minimum 30 points on the sine curve for proper commutation
 
@@ -130,9 +131,9 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
         printf("erps too high!\r\n");
     }
 
-  //check if pedals are turning with throttle active in offroad mode
+  //check if pedals are turning at speed > 6km/h with throttle active in offroad mode
 #if defined(THROTTLE_AND_PAS) || defined (TORQUE_SIMULATION)
-  else if ((ui16_PAS_Counter>timeout || !PAS_dir)&&!(ui8_cheat_state==5 && sumtorque>2)){
+  else if (((ui16_PAS_Counter>timeout || !PAS_dir)&&ui32_erps_filtered>ui16_erps_limit_6km_h)&&!(ui8_cheat_state==5 && sumtorque>2)){
             ui32_setpoint= PI_control(ui16_BatteryCurrent, ui16_current_cal_b);//Curret target = 0 A, this is to keep the integral part of the PI-control up to date
                   if (ui32_setpoint<5){ui32_setpoint=0;}
                   if (ui32_setpoint>255){ui32_setpoint=255;}
@@ -141,9 +142,9 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
                   ui8_control_state=5;
   }
 #endif
- // check if pedals are turning in torquesensor mode, throttle active in offroad mode doesn't work here
+ // check if pedals are turning at speed > 6km/h in torquesensor mode, throttle active in offroad mode doesn't work here
 #if defined(TORQUESENSOR)
-  else if (ui16_PAS_Counter>timeout || !PAS_dir){
+  else if ((ui16_PAS_Counter>timeout || !PAS_dir)&&ui32_erps_filtered>ui16_erps_limit_6km_h){
             ui32_setpoint= PI_control(ui16_BatteryCurrent, ui16_current_cal_b);//Curret target = 0 A, this is to keep the integral part of the PI-control up to date
                   if (ui32_setpoint<5){ui32_setpoint=0;}
                   if (ui32_setpoint>255){ui32_setpoint=255;}
@@ -157,6 +158,7 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
 
       //if none of the overruling boundaries are concerned, calculate new setpoint
 #ifdef TORQUESENSOR
+
       ui16_PAS_accumulated-=ui16_PAS_accumulated>>3;
       ui16_PAS_accumulated+=PAS;
       PAS=ui16_PAS_accumulated>>3;
@@ -167,7 +169,21 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
 	  //printf("Current target %lu\r\n", uint32_current_target);
 	  uint32_current_target=BATTERY_CURRENT_MAX_VALUE;
       }
+
       ui8_control_state=6;
+
+#ifdef TORQUEOVERRIDE
+      //check for torque override
+      ui8_temp = map (ui8_adc_read_throttle () , ADC_THROTTLE_MIN_VALUE, ADC_THROTTLE_MAX_VALUE, 0, SETPOINT_MAX_VALUE); //read in recent throttle value for throttle override
+      float_temp=(float)ui8_temp*(float)(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/255.0+(float)ui16_current_cal_b; //calculate current target
+
+      if ((int32_t)float_temp>uint32_current_target){
+          uint32_current_target=(int32_t)float_temp; //override human power with simple torque
+          ui8_control_state=10;
+      }
+#endif
+
+
 #ifdef SPEEDSENSOR_INTERNAL
   uint32_current_target = CheckSpeed ((uint16_t)uint32_current_target, (uint16_t) ui32_erps_filtered); //limit speed
 #endif
@@ -175,6 +191,14 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
 #ifdef SPEEDSENSOR_EXTERNAL
   uint32_current_target = CheckSpeed ((uint16_t)uint32_current_target, (uint16_t) ui32_SPEED_km_h); //limit speed
 #endif
+
+  //limit phase current
+  if(setpoint_old>0 && (uint32_current_target-ui16_current_cal_b)*255/setpoint_old>PHASE_CURRENT_MAX_VALUE-ui16_current_cal_b){  // limit phase current according to Phase Current = battery current/duty cycle
+      uint32_current_target=(PHASE_CURRENT_MAX_VALUE-ui16_current_cal_b)*setpoint_old/255+ui16_current_cal_b;
+      ui8_control_state=8;
+      // printf("Phase Current limited! %d, %d, %d\r\n", (uint16_t)uint32_current_target,(uint16_t)float_temp, setpoint_old );
+  }
+
       ui32_setpoint= PI_control(ui16_BatteryCurrent, (uint16_t)uint32_current_target);
       if (ui32_setpoint<5)ui32_setpoint=0;
       if (ui32_setpoint>255)ui32_setpoint=255;
