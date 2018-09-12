@@ -66,7 +66,7 @@ uint16_t ui16_PAS_High=1;		//number of High readings on PAS
 uint8_t PAS_dir=0;			//PAS direction flag
 uint8_t PAS_act=3;			//recent PAS direction reading
 uint8_t PAS_old=4;			//last PAS direction reading
-uint16_t ui16_PAS = 32000;		//cadence in timetics
+uint16_t ui16_PAS = 65530;		//cadence in timetics
 uint8_t ui8_PAS_Flag = 0; 		//flag for PAS interrupt
 uint8_t ui8_SPEED_Tag = 0; 		//flag for SPEED update in update_setpoint
 uint8_t ui8_SPEED_Flag = 0; 		//flag for SPEED interrupt
@@ -336,7 +336,7 @@ int main (void)
 
 
 #endif
-
+if(ui16_PAS_Counter>timeout) ui16_PAS = 65530;
 
 
 // scheduled update of setpoint and duty cycle (slow loop, 50 Hz)

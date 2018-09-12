@@ -33,7 +33,7 @@ uint32_t ui32_SPEED_km_h; //global variable Speed
 static uint32_t ui32_SPEED_km_h_accumulated;
 int16_t i16_assistlevel[5]={LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5}; // difference between setpoint and actual value
 uint32_t uint32_current_target=0; //target for PI-Control
-float float_temp=0; //for float calculations
+float float_temp; //for float calculations
 int8_t uint_PWM_Enable=0; //flag for PWM state
 uint16_t ui16_BatteryCurrent_accumulated = 2496L; //8x current offset, for filtering or Battery Current
 uint16_t ui16_BatteryCurrent; //Battery Current read from ADC8
@@ -43,7 +43,7 @@ uint16_t ui16_BatteryVoltage_accumulated;
 uint8_t ui8_regen_throttle; //regen throttle read from ADC X4
 int8_t i8_motor_temperature; //temperature read from ADC X4
 uint8_t ui8_control_state=0; //regen flag for shifting from +90° to -90°
-static uint16_t ui16_PAS_accumulated = 64000L; // for filtering of PAS value
+static uint32_t ui32_PAS_accumulated; // for filtering of PAS value
 static uint32_t ui32_erps_accumulated; //for filtering of erps
 uint32_t ui32_erps_filtered; //filtered value of erps
 uint8_t ui8_temp;
@@ -160,9 +160,9 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
       //if none of the overruling boundaries are concerned, calculate new setpoint
 #ifdef TORQUESENSOR
 
-      ui16_PAS_accumulated-=ui16_PAS_accumulated>>3;
-      ui16_PAS_accumulated+=PAS;
-      PAS=ui16_PAS_accumulated>>3;
+      ui32_PAS_accumulated-=ui32_PAS_accumulated>>3;
+      ui32_PAS_accumulated+=PAS;
+      PAS=ui32_PAS_accumulated>>3;
       //uint32_current_target=((i16_assistlevel[ui8_assistlevel_global-1]*fummelfaktor*sumtorque))/(((uint32_t)PAS)<<6)+ui16_current_cal_b; 						//calculate setpoint
       uint32_current_target=(((i16_assistlevel[ui8_assistlevel_global-1]*fummelfaktor*sumtorque))/(((uint32_t)PAS)<<6)*(1000+ui32_SPEED_km_h/limit))/1000+ui16_current_cal_b;
       //printf("vor: spd %d, pas %d, sumtor %d, setpoint %lu\n", speed, PAS, sumtorque, ui32_setpoint);
@@ -235,15 +235,19 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
 #endif
 
 #ifdef TORQUE_SIMULATION
-  ui16_PAS_accumulated-=ui16_PAS_accumulated>>3;
-  ui16_PAS_accumulated+=PAS;
-  PAS=ui16_PAS_accumulated>>3;
+  //printf("%lu, %u\r\n",(uint32_t)(float_temp),PAS);
+ /* ui32_PAS_accumulated-=ui32_PAS_accumulated>>3;
+  ui32_PAS_accumulated+=PAS;
+  PAS= (uint16_t)ui32_PAS_accumulated>>3;*/
   if (PAS>RAMP_END) //if you are pedaling slower than defined ramp end, current is proportional to cadence
     {
-      uint32_current_target= (i16_assistlevel[ui8_assistlevel_global-1]*(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/100);
-      float_temp=((float)RAMP_END)/((float)PAS);
 
-      uint32_current_target= ((int16_t)(uint32_current_target)*(int16_t)(float_temp*100))/100+ui16_current_cal_b;
+      uint32_current_target= (i16_assistlevel[ui8_assistlevel_global-1]*(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/100);
+	  if(ui16_PAS_Counter>timeout) {float_temp=0;}
+	  else {float_temp=((float)RAMP_END)/((float)PAS);}
+	 // printf("%lu, %u\r\n",(uint32_t)(float_temp*100),PAS);
+	//  else {float_temp=RAMP_END<<8/PAS;}
+      uint32_current_target= ((uint16_t)(uint32_current_target)*(uint16_t)(float_temp*100.0))/100+ui16_current_cal_b;
       //printf("PAS %d, delta %d, current target %d\r\n", PAS, (int16_t)(float_temp*100), (int16_t) uint32_current_target);
     }
   else
@@ -252,6 +256,11 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
       //printf("current_target %d\r\n", (int16_t)uint32_current_target);
     }
   ui8_control_state=9;
+
+  //cut power if PAS has timed out
+  //if (PAS>timeout)uint32_current_target=PI_control(ui16_BatteryCurrent, ui16_current_cal_b);//Curret target = 0 A, this is to keep the integral part of the PI-control up to date
+
+  // Throttle override
   float_temp=(float)sumtorque*(float)(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/255.0+(float)ui16_current_cal_b; //calculate current target
   if ((int32_t)float_temp>uint32_current_target){
       uint32_current_target=(int32_t)float_temp; //override torque simulation with throttle
