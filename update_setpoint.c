@@ -47,6 +47,7 @@ static uint16_t ui16_PAS_accumulated = 64000L; // for filtering of PAS value
 static uint32_t ui32_erps_accumulated; //for filtering of erps
 uint32_t ui32_erps_filtered; //filtered value of erps
 uint8_t ui8_temp;
+uint32_t ui32_temp;
 //uint16_t ui16_erps_limit_lower=((limit)*(GEAR_RATIO/wheel_circumference));
 //uint16_t ui16_erps_limit_higher=((limit+2)*(GEAR_RATIO/wheel_circumference));
 uint16_t ui16_erps_limit_lower=(uint16_t)((float)GEAR_RATIO*(float)limit*10000.0/((float)wheel_circumference*36.0));
