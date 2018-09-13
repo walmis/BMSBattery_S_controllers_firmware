@@ -163,6 +163,7 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
       ui32_PAS_accumulated-=ui32_PAS_accumulated>>3;
       ui32_PAS_accumulated+=PAS;
       PAS=ui32_PAS_accumulated>>3;
+     // printf("%u\r\n",PAS);
       //uint32_current_target=((i16_assistlevel[ui8_assistlevel_global-1]*fummelfaktor*sumtorque))/(((uint32_t)PAS)<<6)+ui16_current_cal_b; 						//calculate setpoint
       uint32_current_target=(((i16_assistlevel[ui8_assistlevel_global-1]*fummelfaktor*sumtorque))/(((uint32_t)PAS)<<6)*(1000+ui32_SPEED_km_h/limit))/1000+ui16_current_cal_b;
       //printf("vor: spd %d, pas %d, sumtor %d, setpoint %lu\n", speed, PAS, sumtorque, ui32_setpoint);
@@ -235,18 +236,19 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
 #endif
 
 #ifdef TORQUE_SIMULATION
-  //printf("%lu, %u\r\n",(uint32_t)(float_temp),PAS);
- /* ui32_PAS_accumulated-=ui32_PAS_accumulated>>3;
+
+  ui32_PAS_accumulated-=ui32_PAS_accumulated>>3;
   ui32_PAS_accumulated+=PAS;
-  PAS= (uint16_t)ui32_PAS_accumulated>>3;*/
+  PAS=ui32_PAS_accumulated>>3;
+
+
   if (PAS>RAMP_END) //if you are pedaling slower than defined ramp end, current is proportional to cadence
     {
 
       uint32_current_target= (i16_assistlevel[ui8_assistlevel_global-1]*(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/100);
-	  if(ui16_PAS_Counter>timeout) {float_temp=0;}
-	  else {float_temp=((float)RAMP_END)/((float)PAS);}
-	 // printf("%lu, %u\r\n",(uint32_t)(float_temp*100),PAS);
-	//  else {float_temp=RAMP_END<<8/PAS;}
+	  float_temp=((float)RAMP_END)/((float)PAS);
+	//  printf("%lu, %u\r\n",(uint32_t)(float_temp*100),PAS);
+
       uint32_current_target= ((uint16_t)(uint32_current_target)*(uint16_t)(float_temp*100.0))/100+ui16_current_cal_b;
       //printf("PAS %d, delta %d, current target %d\r\n", PAS, (int16_t)(float_temp*100), (int16_t) uint32_current_target);
     }
@@ -257,8 +259,6 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
     }
   ui8_control_state=9;
 
-  //cut power if PAS has timed out
-  //if (PAS>timeout)uint32_current_target=PI_control(ui16_BatteryCurrent, ui16_current_cal_b);//Curret target = 0 A, this is to keep the integral part of the PI-control up to date
 
   // Throttle override
   float_temp=(float)sumtorque*(float)(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/255.0+(float)ui16_current_cal_b; //calculate current target
