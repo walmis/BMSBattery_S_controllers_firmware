@@ -32,7 +32,7 @@ extern uint8_t PAS_is_active;
 extern uint16_t ui16_sum_torque;
 extern uint8_t ui8_offroad_state;
 extern uint32_t uint32_current_target;
-extern uint16_t ui16_setpoint;
+extern uint16_t ui16_dutycycle;
 extern uint16_t ui16_throttle_accumulated;
 extern uint16_t ui16_current_cal_b;
 extern uint8_t ui8_current_cal_a;

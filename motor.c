@@ -149,14 +149,14 @@ void hall_sensors_read_and_action (void)
 
 	if (ui16_motor_speed_erps > 3 && ui16_BatteryCurrent >ui16_current_cal_b+3) //normal riding,
 	      {
-		if (ui16_ADC_iq_current>>2 > 127 && ui8_position_correction_value < 135)
+		/*if (ui16_ADC_iq_current>>2 > 127 && ui8_position_correction_value < 135)
 		{
 		  ui8_position_correction_value++;
 		}
 		else if (ui16_ADC_iq_current>>2 < 125 && ui8_position_correction_value >90)
 		{
 		  ui8_position_correction_value--;
-		}
+		}*/
 	      }
 	else if (ui16_motor_speed_erps > 3 && ui16_BatteryCurrent < ui16_current_cal_b-3) //regen
 	{

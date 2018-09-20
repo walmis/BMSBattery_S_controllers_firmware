@@ -58,7 +58,7 @@ int32_t map(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t 
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-uint32_t PI_control(uint16_t pv, uint16_t setpoint) {
+uint32_t PI_control(uint16_t pv, uint16_t setpoint, uint8_t PWM_flag) {
     float float_p;
     static float float_i;
     float_p = ((float) setpoint - (float) pv) * flt_s_pid_gain_p;
@@ -67,7 +67,8 @@ uint32_t PI_control(uint16_t pv, uint16_t setpoint) {
     float_i += ((float) setpoint - (float) pv) * flt_s_pid_gain_i;
     if (float_i > 255)float_i = 255;
     if (float_i < 0)float_i = 0;
-
+    //set duty cycle hard to the externally wanted value
+    if(!PWM_flag)float_i=ui32_erps_filtered*MOTOR_KV-float_p;
     return ((uint32_t) (float_p + float_i));
 }
 
