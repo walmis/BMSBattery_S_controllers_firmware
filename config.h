@@ -12,7 +12,7 @@
 #define limit 28
 #define timeout 3125
 #define wheel_circumference 2230L
-#define ADC_THROTTLE_MIN_VALUE 43
+#define ADC_THROTTLE_MIN_VALUE 48
 #define ADC_THROTTLE_MAX_VALUE 182
 #define BATTERY_VOLTAGE_MIN_VALUE 111
 #define BATTERY_CURRENT_MAX_VALUE 40L
