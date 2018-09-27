@@ -177,7 +177,7 @@ uint16_t update_setpoint (uint16_t speed, uint16_t PAS, uint16_t sumtorque, uint
 #ifdef TORQUEOVERRIDE
       //check for torque override
       ui8_temp = map (ui8_adc_read_throttle () , ADC_THROTTLE_MIN_VALUE, ADC_THROTTLE_MAX_VALUE, 0, SETPOINT_MAX_VALUE); //read in recent throttle value for throttle override
-      float_temp=(float)ui8_temp*(float)(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/255.0+(float)ui16_current_cal_b; //calculate current target
+      float_temp=(float)ui8_temp*(float)(BATTERY_CURRENT_MAX_VALUE-ui16_current_cal_b)/255.0*(1-(float)ui32_erps_filtered/2/(float)ui16_erps_limit_lower)+(float)ui16_current_cal_b; //calculate current target, ramp down linear with speed. Risk: Value is getting negative if speed>2*speedlimit
 
       if ((int32_t)float_temp>uint32_current_target){
           uint32_current_target=(int32_t)float_temp; //override human power with simple torque
