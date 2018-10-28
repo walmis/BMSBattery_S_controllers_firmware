@@ -1,45 +1,33 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.10)
+
 
 SET(CMAKE_SYSTEM_NAME Generic)
 SET(CMAKE_C_COMPILER sdcc)
 SET(CMAKE_SYSTEM_PROCESSOR stm8)
 
-SET(SEARCH_PATHS "C:/cygwin64/bin" "C:/cygwin64/usr/local/bin")
-
 IF(WIN32)
-	find_program (CMAKE_OBJCOPY 
-		stm8-objcopy
-		PATHS ${SEARCH_PATHS}
-	)
-	
-	find_program (CMAKE_SIZE
-		stm8-size
-		PATHS ${SEARCH_PATHS}
-	)
-	
-	SET(FLASH_CMD "stm8flash -c stlinkv2 -p stm8s105?6 -w")
-	SET(FLASHOPT_CMD "stm8flash -c stlinkv2 -p stm8s105?6 -s opt -w")
-	
-ELSE()
-	SET(CMAKE_OBJCOPY stm8-objcopy)
-	SET(CMAKE_SIZE stm8-size)
-	
-	SET(FLASH_CMD "stm8flash -c stlinkv2 -p stm8s105?6 -w")
-	SET(FLASHOPT_CMD "stm8flash -c stlinkv2 -p stm8s105?6 -s opt -w")
+	LIST(APPEND CMAKE_PROGRAM_PATH  "${CMAKE_SOURCE_DIR}/cygwin/bin/")
 ENDIF()
 
+find_program (CMAKE_OBJCOPY 
+	stm8-objcopy
+)
+
+find_program (CMAKE_SIZE
+	stm8-size
+)
+
+find_program (STM8FLASH
+	stm8flash
+)
+	
 project(OSEC_firmware C)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".elf")
 SET(CMAKE_C_FLAGS "-mstm8 --std-c99 --nolospre")
 SET(CMAKE_EXE_LINKER_FLAGS "--out-fmt-elf")
 SET(ELF_SECTIONS_TO_REMOVE "-R DATA -R INITIALIZED -R SSEG -R .debug_line -R .debug_loc -R .debug_abbrev -R .debug_info -R .debug_pubnames -R .debug_frame")
-# the name of the target operating system
 
-
-# which compilers to use for C and C++
-
-SET(CMAKE_TOOLCHAIN Generic-SDCC-C.cmake)
 SET(SDIR StdPeriphLib/src)
 
 SET(SOURCES 
@@ -79,19 +67,18 @@ include_directories(
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-
-
+	
 add_custom_target(hex
-	${STM8_OBJCOPY} -O ihex ${ELF_SECTIONS_TO_REMOVE} ${PROJECT_NAME}.elf ${PROJECT_NAME}.ihx
+	COMMAND ${CMAKE_OBJCOPY} -O ihex ${ELF_SECTIONS_TO_REMOVE} ${PROJECT_NAME}.elf ${PROJECT_NAME}.ihx
 	DEPENDS ${PROJECT_NAME}
 )
 	
 add_custom_target(optionbytes
-	"${FLASHOPT_CMD} ${CMAKE_SOURCE_DIR}/optionbytes.hex"
+	COMMAND ${STM8FLASH} -c stlinkv2 -p stm8s105?6 -s opt -w optionbytes.hex
 )
 
 add_custom_target(flash
-	"${FLASH_CMD} ${PROJECT_NAME}.ihx"
+	COMMAND ${STM8FLASH} -c stlinkv2 -p stm8s105?6 -w ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.ihx
 	DEPENDS hex
 )
 
